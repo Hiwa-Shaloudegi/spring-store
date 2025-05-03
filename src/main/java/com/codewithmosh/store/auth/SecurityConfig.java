@@ -1,11 +1,9 @@
 package com.codewithmosh.store.auth;
 
-import com.codewithmosh.store.users.Role;
-import com.codewithmosh.store.auth.JwtAuthenticationFilter;
+import com.codewithmosh.store.common.SecurityRules;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -21,6 +19,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.List;
+
 @AllArgsConstructor
 @Configuration
 @EnableWebSecurity
@@ -28,6 +28,7 @@ public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final List<SecurityRules> securityRules;
 
 
     @Bean
@@ -36,31 +37,22 @@ public class SecurityConfig {
         // 2. Disable CSRF
         // 3. Authorize Http requests
         http
-                .sessionManagement(c -> c.sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS))
+                .sessionManagement(c -> c.sessionCreationPolicy(
+                        org.springframework.security.config.http.SessionCreationPolicy.STATELESS))
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(c-> c
-                        .requestMatchers("/carts/**").permitAll()
-                        .requestMatchers("/admin/**").hasRole(Role.ADMIN.name())
-                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/checkout/webhook").permitAll()
-                        .anyRequest().authenticated()
+                .authorizeHttpRequests(c -> {
+                                           securityRules.forEach(rule -> rule.configure(c));
+                                           c.anyRequest().authenticated();
+                                       }
 
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling(c ->
-                {
-                    c.authenticationEntryPoint(
-                            new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
+                .exceptionHandling(c -> {
+                    c.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
 
-                    c.accessDeniedHandler(
-                            (request, response, accessDeniedException) -> {
-                                response.setStatus(HttpStatus.FORBIDDEN.value());
-                            }
-                    );
-                })
-        ;
+                    c.accessDeniedHandler((request, response, accessDeniedException) -> response.setStatus(
+                            HttpStatus.FORBIDDEN.value()));
+                });
         return http.build();
     }
 
