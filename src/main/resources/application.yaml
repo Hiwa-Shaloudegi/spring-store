@@ -1,44 +1,14 @@
 spring:
   application:
     name: store
-  datasource:
-    url: jdbc:mysql://localhost:3306/store_api?createDatabaseIfNotExist=true
-    username: root
-    password: root
-  jpa:
-    show-sql: true
+
   jwt:
     secret: ${JWT_SECRET}
     access-token-expiration: 7200 #2h     #300 # 5m
     refresh-token-expiration: 604800 # 7d
-    token-header: Authorization
-    token-type: JWT
 
+  profiles:
+    active: dev
 stripe:
   secretKey: ${STRIPE_SECRET_KEY}
   webhookSecretKey: ${STRIPE_WEBHOOK_SECRET_KEY}
-
-websiteUrl: http://localhost:4242
-
-
-
-
-#  security:
-#    filter:
-#      order: 1
-#    ignore-url:
-#      - /api/v1/auth/login
-#      - /api/v1/auth/register
-#      - /api/v1/auth/refresh-token
-#      - /api/v1/auth/logout
-#      - /api/v1/products
-#      - /api/v1/products/*
-#      - /v3/api-docs/**
-#      - /swagger-ui/**
-#      - /swagger-resources/**
-#      - /webjars/**
-#  swagger:
-#    enabled: true
-#    title: Store API
-#    description: Store API Documentation
-#    version: 1.0.0
